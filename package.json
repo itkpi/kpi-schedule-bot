@@ -1,0 +1,21 @@
+{
+  "name": "kpi-rozklad",
+  "version": "1.0.0",
+  "description": "KPI schedule bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "keywords": [
+    "KPI"
+  ],
+  "author": "IASA SC",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.4",
+    "moment-timezone": "^0.5.13",
+    "mongodb": "^2.2.33",
+    "request": "^2.88.0",
+    "telegraf": "^3.14.0"
+  }
+}
