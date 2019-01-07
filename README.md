@@ -9,3 +9,5 @@ database needs 3 Collections:
 - dbtelegram
 
 create autent.js with bot token, admin id, database url and admin commands.
+
+author: @ViacheslavTsurkan
