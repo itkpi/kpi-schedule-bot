@@ -1,3 +1,3 @@
-# TEXT
+# @KPI_schedule_bot
 
-BOT /KPI/
+node.js + mongo DB
