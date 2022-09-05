@@ -1,7 +1,8 @@
-# @KPI_schedule_bot - the most popular way to check the schedule in KPI
+# KPI Schedule Bot
+
+The most popular way to check the schedule in KPI
 
 node.js + mongo DB
-
 
 database needs 3 Collections:
 - admin
@@ -20,26 +21,25 @@ create autent.js with bot token, admin id, database url and admin commands.
 
 	список команд.txt - list for @BotFather
 
+## Available commands
 
+- /rozklad — helps to select or change the name of the group
+- /r — same as /rozklad
+	-  /today — schedule for today
+	-  /tomorrow — schedule for tomorrow
+	-  /week — schedule for week
+	-  /nextweek — schedule for next week
+	-  /timetable — lessons timetable
+- /exam — your exams
+- /full — schedule for two weeks with the names of teachers
 
-Доступные команды:
+- /who — reminds teacher's name
+- /left — shows the time until the end of the pair
 
-- /rozklad — помогает выбрать или поменять название группы
-- /r — тоже, что /rozklad
-	-  /today — расписание на сегодня
-	-  /tomorrow — расписание на завтра
-	-  /week — расписание на неделю
-	-  /nextweek — расписание на следующую неделю
-	-  /timetable — расписание звонков
-- /exam — твои экзамены
-- /full — расписание на две недели с именами преподавателей
+- /notification — with the help of notifications, you can receive the schedule for the next day at the time you choose
+	-  /off — disables notifications
+	-  /t — used to set reminder time
 
-- /who — подсказывает имя преподавателя
-- /left — показывает время до конца пары
+## Authors
 
-- /notification — c помощью уведомлений ты можешь получать в выбранное тобой время расписание на следующий день
-	-  /off — выключает уведомления
-	-  /t — используется для установки времени напоминания
-
-
-author: @ViacheslavTsurkan
+- [Viacheslav Tsurkan](https://t.me/viacheslav_tsurkan)
