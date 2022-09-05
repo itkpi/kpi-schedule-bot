@@ -12,10 +12,10 @@
   "author": "IASA SC",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.16.4",
-    "moment-timezone": "^0.5.13",
-    "mongodb": "^2.2.33",
-    "request": "^2.88.0",
-    "telegraf": "^3.14.0"
+    "express": "^4.17.1",
+    "moment-timezone": "^0.5.31",
+    "mongodb": "^3.6.2",
+    "request": "^2.88.2",
+    "telegraf": "^3.38.0"
   }
 }

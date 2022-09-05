@@ -9,6 +9,7 @@ const Telegraf = require('telegraf')
 
 var secure = require('./autent.js');
 var url = secure.mongo_url
+var db_name = 'heroku_htqqwx5k';
 process.env.BOT_TOKEN = secure.BOT_TOKEN 
 
 
@@ -48,8 +49,9 @@ bot.command('chatid', ({ chat}) => {
 
 bot.command('start', ({ chat, message}) => {
 	
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
+		var db = client.db(db_name);
 		db.collection('all').find({'chatid':message.chat.id}).count()
 		.then(Promise => {
 			
@@ -57,7 +59,7 @@ bot.command('start', ({ chat, message}) => {
 
 				var name = message.chat.title?message.chat.title:(message.chat.username+message.chat.first_name+message.chat.last_name);
 				db.collection('all').insert({'name': name, 'chatid': message.chat.id, 'year': 0, 'stat': 0}, function(err, result) {		
-					db.close;
+					client.close();
 				})
 			} 
 		});
@@ -95,8 +97,9 @@ bot.command('rozklad', ({ chat, message }) => {
 function rcommand(chat, message){
 	var groupbyid = false;
 	// проверка на наличие в all
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
+		var db = client.db(db_name);
 		db.collection('all').find({'chatid':message.chat.id}).count()
 		.then(Promise => {
 			
@@ -106,7 +109,7 @@ function rcommand(chat, message){
 				db.collection('all').insert({'name': name, 'chatid': message.chat.id, 'year': 0, 'stat': 0}, function(err, result) {		
 					
 				})
-				db.close;
+				client.close();
 			} 
 		});
 	});
@@ -115,9 +118,9 @@ function rcommand(chat, message){
 
 	// проверка на команду без аргумента
 	if (message.text == "/r" || message.text == "/r@KPI_schedule_bot" || message.text == "/rozklad" || message.text == "/rozklad@KPI_schedule_bot"|| message.text == "/schedule"|| message.text == "/s"){
-		MongoClient.connect(url, function(err, db) {
+		MongoClient.connect(url, function(err, client) {
 			assert.equal(null, err);
-
+			var db = client.db(db_name);
 			var collection = db.collection('dbtelegram');
 
 			collection.find({'chatid':chat.id}).count()
@@ -126,14 +129,14 @@ function rcommand(chat, message){
 				if (Promise){				
 					collection.find({'chatid':chat.id}).toArray(function(err, docs) {
 						menu(docs[0].group,chat);
-						db.close;
+						client.close();
 					});
 
 
 					return;
 				} else {
 					bot.telegram.sendMessage(chat.id, errortext).catch((err) => console.log(err));
-					db.close;
+					client.close();
 					return;
 				}
 			});
@@ -185,9 +188,9 @@ function rcommand(chat, message){
 				group = str;
 			}
 			
-			MongoClient.connect(url, function(err, db) {
+			MongoClient.connect(url, function(err, client) {
 				assert.equal(null, err);
-
+				var db = client.db(db_name);
 				var collection = db.collection('dbtelegram');	
 				
 				collection.find({'chatid':chat.id}).count()
@@ -205,7 +208,7 @@ function rcommand(chat, message){
 							});
 
 						menu(bod.data.group_full_name,chat);
-						db.close;
+						client.close();
 						return;
 					} else {
 						var name = message.chat.title?message.chat.title:(message.chat.username+message.chat.first_name+message.chat.last_name);
@@ -213,7 +216,7 @@ function rcommand(chat, message){
 							
 							menu(bod.data.group_full_name,chat);
 							
-							db.close;
+							client.close();
 							return;
 						})
 					}
@@ -332,9 +335,9 @@ bot.command('nextweek', ({ chat }) => {
 
 function commandSelector(chat, nn){
 	statistic(chat)
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
-
+		var db = client.db(db_name);
 		var collection = db.collection('dbtelegram');
 
 		collection.find({'chatid':chat.id}).count()
@@ -344,11 +347,11 @@ function commandSelector(chat, nn){
 				collection.find({'chatid':chat.id}).toArray(function(err, docs) {
 					schedule(docs[0].group, chat.id,nn);
 				});  	
-				db.close;
+				client.close();
 				return;
 			} else {
 				bot.telegram.sendMessage(chat.id, errortext, extra).catch((err) => console.log(err));
-				db.close;
+				client.close();
 				return;
 			}
 		});
@@ -383,18 +386,19 @@ function menu(group,chat){
 
 // increment stat in bd if a user uses the bot
 function statistic(chat){
-	MongoClient.connect(url, function(err, db) {
-		assert.equal(null, err);						
+	MongoClient.connect(url, function(err, client) {
+		assert.equal(null, err);
+		var db = client.db(db_name);
 		db.collection('all').updateOne(
 			{ 'chatid' : chat.id },{ $inc : { 'stat': 1 } }, function(err, results) {	
 			});
 		
-		db.close;
+		client.close();
 	});
 }
 
 function schedule(group, chatid, commandNumber){
-
+	// console.log('schedule for '+group + ' chat_id '+ chatid+' command '+commandNumber);
 	var url = "https://api.rozklad.org.ua/v2/groups/"+encodeURIComponent(group)+"/timetable";
 	request({
 		url: url, 
@@ -571,9 +575,9 @@ function schedule(group, chatid, commandNumber){
 
 bot.command('who', ({ chat }) => {
 	
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
-
+		var db = client.db(db_name);
 		var collection = db.collection('dbtelegram');
 
 		collection.find({'chatid':chat.id}).count()
@@ -642,11 +646,11 @@ bot.command('who', ({ chat }) => {
 					})
 					
 				});  	
-				db.close;
+				client.close();
 				return;
 			} else {
 				bot.telegram.sendMessage(chat.id,errortext,extra);
-				db.close;
+				client.close();
 				return;
 			}
 		});
@@ -659,9 +663,9 @@ bot.command('who', ({ chat }) => {
 
 bot.command('full', ({ chat }) => {
 	
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
-
+		var db = client.db(db_name);
 		var collection = db.collection('dbtelegram');
 
 		collection.find({'chatid':chat.id}).count()
@@ -738,11 +742,11 @@ bot.command('full', ({ chat }) => {
 					})
 					
 				});  	
-				db.close;
+				client.close();
 				return;
 			} else {
 				bot.telegram.sendMessage(chat.id,errortext,extra);
-				db.close;
+				client.close();
 				return;
 			}
 		});
@@ -760,8 +764,9 @@ bot.command("cleandb", ({ message }) => {
 
 var a = new Array();
 var a = [];
-MongoClient.connect(url, function(err, db) {
+MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
+		var db = client.db(db_name);
 		db.collection('all').find().toArray(function(err, docs) {
 			for (var i = 0; i < docs.length; i++) {
 				a[i]=docs[i].chatid;
@@ -793,9 +798,9 @@ bot.command("notification", ({ chat }) => {
 	// status on off, t
 	
 	//statistic(chat)
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
-
+		var db = client.db(db_name);
 		var collection = db.collection('dbtelegram');
 
 		collection.find({'chatid':chat.id}).count()
@@ -806,17 +811,17 @@ bot.command("notification", ({ chat }) => {
 					
 					if (docs[0].time){
 						bot.telegram.sendMessage(chat.id, "_Уведомления активированы!_\n время: "+docs[0].time+"\n выключить: /off",extra);
-						db.close;
+						client.close();
 						return;
 					} else {
 						bot.telegram.sendMessage(chat.id, "С помощью уведомлений ты можешь получать в выбранное тобой время расписание на следующий день, *чтобы выбрать время напиши /t и время*.\n например \"/t 20:30\"",extra);
-						db.close;
+						client.close();
 						return;
 					}
 				});
 			} else {
 				bot.telegram.sendMessage(chat.id,errortext,extra);
-				db.close;
+				client.close();
 				return;
 			}
 		});
@@ -830,9 +835,9 @@ bot.command("on", ({ chat }) => {
 })
 
 bot.command("off", ({ chat }) => {
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
-
+		var db = client.db(db_name);
 		var collection = db.collection('dbtelegram');
 		collection.updateOne(
 			{ "chatid" : chat.id },
@@ -841,7 +846,7 @@ bot.command("off", ({ chat }) => {
 
 
 			}, function(err, results) {
-
+				client.close();
 			});
 	})
 	bot.telegram.sendMessage(chat.id, "_Уведомления выключены_, чтобы снова включить используй /t",extra);
@@ -866,9 +871,9 @@ bot.command(timevar, ({ chat, message }) => {
 })
 
 function settime(chat, message, certain){
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
-
+		var db = client.db(db_name);
 		var collection = db.collection('dbtelegram');
 
 		collection.find({'chatid':chat.id}).count()
@@ -889,9 +894,9 @@ function settime(chat, message, certain){
 
 				if (re.exec(str)){
 					bot.telegram.sendMessage(chat.id,"🕓 "+str+"\n*Напоминания активированы!* Теперь в выбранное тобой время будет приходить расписание на следующий день.\n\n Для отключения используй /off", extra);
-					MongoClient.connect(url, function(err, db) {
+					MongoClient.connect(url, function(err, client) {
 						assert.equal(null, err);
-
+						var db = client.db(db_name);
 						var collection = db.collection('dbtelegram');
 						collection.updateOne(
 							{ "chatid" : chat.id },
@@ -900,7 +905,7 @@ function settime(chat, message, certain){
 
 
 							}, function(err, results) {
-
+								client.close();
 							});
 					})
 
@@ -911,7 +916,7 @@ function settime(chat, message, certain){
 			} else {
 				
 				bot.telegram.sendMessage(chat.id,errortext,extra);
-				db.close;
+				client.close();
 				return;
 			}
 		});
@@ -920,8 +925,9 @@ function settime(chat, message, certain){
 
 //инициализация с базы состояния уведомлений
 var notificationState = true;
-MongoClient.connect(url, function(err, db) {
+MongoClient.connect(url, function(err, client) {
 	assert.equal(null, err);
+	var db = client.db(db_name);
 	db.collection('admin').find({'name': 'main'}).toArray(function(err, docs) {
 		notificationState = docs[0].notification
 	});
@@ -938,9 +944,9 @@ bot.command(secure.admin_notification_control, ({ chat }) => {
 	}
 	bot.telegram.sendMessage(chat.id, messageText,extra).catch((err) => console.log(err));
 	notificationState = !notificationState;
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
-
+		var db = client.db(db_name);
 		var collection = db.collection('admin');
 		collection.updateOne(
 			{ 'name': 'main'},
@@ -949,7 +955,7 @@ bot.command(secure.admin_notification_control, ({ chat }) => {
 
 
 			}, function(err, results) {
-
+				client.close();
 			});
 	})
 })
@@ -961,23 +967,24 @@ function notificationEngine(){
 	var timerId = setInterval(function() {
 		if (notificationState){
 			
-			MongoClient.connect(url, function(err, db) {
+			MongoClient.connect(url, function(err, client) {
 				assert.equal(null, err);
+				var db = client.db(db_name);
 				db.collection('dbtelegram').find().toArray(function(err, docs) {
+					client.close();
 					
-					
-					
+					var current_t = moment().tz("Europe/Kiev").format('HH:mm');
 					for (var j = 0; j < docs.length; j++) {
 
 						if (docs[j].time){
-							if (docs[j].time == (moment().tz("Europe/Kiev").format('HH:mm'))){
+							if (docs[j].time == (current_t)){
 								
 								if (docs[j].time < "11:30" && docs[j].time >"00:00"){
 									schedule(docs[j].group, docs[j].chatid,8);
 								}else{
 									schedule(docs[j].group, docs[j].chatid,7);
 								}
-						//bot.telegram.sendMessage(secure.admin_id,(moment().tz("Europe/Kiev").format('HH:mm')));
+						//bot.telegram.sendMessage(secure.admin_id, current_t);
 					}
 				}
 				
@@ -1002,9 +1009,9 @@ bot.command('right', ({ chat}) => {
 
 bot.command('left', ({ chat }) => {
 	
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
-
+		var db = client.db(db_name);
 		var collection = db.collection('dbtelegram');
 
 		collection.find({'chatid':chat.id}).count()
@@ -1102,11 +1109,11 @@ bot.command('left', ({ chat }) => {
 					})
 					
 				});  	
-				db.close;
+				client.close();
 				return;
 			} else {
 				bot.telegram.sendMessage(chat.id,errortext,extra);
-				db.close;
+				client.close();
 				return;
 			}
 		});
@@ -1127,9 +1134,9 @@ function exam(chat, message){
 
 
 	statistic(chat)
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
-		
+		var db = client.db(db_name);
 		var collection = db.collection('dbtelegram');
 
 		collection.find({'chatid':chat.id}).count()
@@ -1180,11 +1187,11 @@ function exam(chat, message){
 					
 
 				});  	
-				db.close;
+				client.close();
 				return;
 			} else {
 				bot.telegram.sendMessage(chat.id,errortext,extra).catch((err) => console.log(err));
-				db.close;
+				client.close();
 				return;
 			}
 		});
@@ -1221,9 +1228,11 @@ bot.command(secure.mess_set_text, ({ chat,message }) => {
 bot.command(secure.mess_send, ({ chat }) => {
 
 	if (textToSend != ""){
-		MongoClient.connect(url, function(err, db) {
+		MongoClient.connect(url, function(err, client) {
 			assert.equal(null, err);
+			var db = client.db(db_name);
 			db.collection('dbtelegram').find().toArray(function(err, docs) {
+				client.close();
 
 
 				for (var j = m; j < m+500; j++) {
@@ -1253,9 +1262,11 @@ bot.command(secure.mess_send, ({ chat }) => {
 // рассылка для тех кто не активировал уведомления 
 bot.command(secure.mess_notif, ({ chat }) => {
 
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
+		var db = client.db(db_name);
 		db.collection('dbtelegram').find().toArray(function(err, docs) {
+			client.close();
 
 			for (var j = m; j < m+500; j++) {
 				if (j < docs.length){
@@ -1302,12 +1313,14 @@ bot.command(secure.mess_notif, ({ chat }) => {
 bot.command(secure.mess_for_zero, ({ chat }) => {
 
 
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
+		var db = client.db(db_name);
 		db.collection('dbtelegram').find().toArray(function(err, docs) {
 			
 			var h = true;
 			db.collection('all').find().toArray(function(err, doc) {
+				client.close();
 				for (var j = 0; j < doc.length; j++) {
 					h = true;
 					for (var i = 0; i < docs.length; i++) {
@@ -1352,9 +1365,9 @@ bot.command(secure.admin_statistic, ({ chat, from}) => {
 			result = bod.match( /Последний апдейт api: <strong>(\d\d.\d\d.\d\d\d\d)<\/strong>/i );
 			answerS += "Дата обновления api: *"+ result[1] + "*\n\n";
 			
-			MongoClient.connect(url, function(err, db) {
+			MongoClient.connect(url, function(err, client) {
 				assert.equal(null, err);
-
+				var db = client.db(db_name);
 				
 
 				db.collection('all').find().toArray(function(err, docs) {
@@ -1401,7 +1414,7 @@ bot.command(secure.admin_statistic, ({ chat, from}) => {
 						answerS += "\n" + messageText;
 						
 						bot.telegram.sendMessage(chat.id, answerS, extra).catch((err) => console.log(err));
-						db.close;
+						client.close();
 					});		
 					
 				})
@@ -1436,8 +1449,9 @@ bot.command(secure.admin_help, ({ chat}) => {
 bot.command(!!!, ({ chat }) => {
 	
 
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
+		var db = client.db(db_name);
 		db.collection('dbtelegram').find().toArray(function(err, docs) {
 			
 			
@@ -1475,8 +1489,9 @@ bot.command(!!!, ({ chat }) => {
 
 bot.command('stat_6', ({ chat, reply }) => {
 	
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(url, function(err, client) {
 		assert.equal(null, err);
+		var db = client.db(db_name);
 		db.collection('dbtelegram').find().toArray(function(err, docs) {
 					var rroom = new Array(0)
 					var tteacher = new Array(0)
